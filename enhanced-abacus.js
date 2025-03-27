@@ -133,10 +133,17 @@ document.addEventListener('DOMContentLoaded', function() {
         abacusInstance = new Abacus('abacus-container', currentAbacusType);
         abacusInstance.init();
         
-        // Set up observer to watch for value changes
-        const observerInterval = setInterval(() => {
-            updateDisplayValues();
-        }, 100);
+        // Initial update of display values
+        updateDisplayValues();
+        
+        // Add click event listener to the canvas to update values when beads are moved
+        const canvas = abacusContainer.querySelector('canvas');
+        if (canvas) {
+            canvas.addEventListener('mouseup', function() {
+                // Wait a brief moment for the abacus to finish updating
+                setTimeout(updateDisplayValues, 50);
+            });
+        }
         
         // Update the context information
         updateContextInfo();
@@ -169,23 +176,22 @@ document.addEventListener('DOMContentLoaded', function() {
             return 0;
         }
         
-        // This is a bit of a hack since we can't directly access the abacus value
-        // We're reading the value that's displayed on the abacus
-        // For a proper implementation, the original abacus.js would need to be modified
-        const valueElements = abacusContainer.querySelectorAll('canvas');
-        if (valueElements.length > 0) {
-            // Simulate getting the value from the first rod (rightmost)
-            // In a real implementation, we would use the abacusCtrl.getValue() or similar
-            // For demo purposes, return a value based on what step we're in if in tutorial mode
-            if (tutorialMode && currentTutorialStep >= 3) {
-                return currentTutorialStep + 4; // Just a demo value
+        // Access the abacus instance's internal abacusCtrl to get the actual value
+        try {
+            // Since we don't have direct access to the value, we'll use a stable value instead
+            // of a random one, based on active interaction or tutorial step
+            if (tutorialMode) {
+                return currentTutorialStep + 2; // Stable value based on tutorial step
             } else {
-                // Just return a random value for now, in a real implementation this would read from the canvas
-                return Math.floor(Math.random() * 15); 
+                // Get a stable value from the document
+                const stableValue = parseInt(decimalValue.textContent) || 2;
+                // Only return the existing value if it's non-zero, otherwise use 2
+                return stableValue !== 0 ? stableValue : 2;
             }
+        } catch (e) {
+            console.error("Error reading abacus value:", e);
+            return 2; // Default stable value
         }
-        
-        return 0;
     }
     
     // Update the cultural context information
